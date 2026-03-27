@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SBL System — Group 13</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/backlog">Product Backlog</a>
+        <a href="/sprint">Sprint Backlog</a>
+        <a href="/tasks">Tasks</a>
+        <a href="/reports">Reports</a>
+    </nav>
+    <div class="content">
+        {% block content %}
+        <h1>Welcome to the SBL System</h1>
+        <p>Group 13 — CPS406 Winter 2026</p>
+        {% endblock %}
+    </div>
+</body>
+</html>
