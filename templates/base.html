@@ -12,11 +12,31 @@
         <a href="/sprint">Sprint Backlog</a>
         <a href="/tasks">Tasks</a>
         <a href="/reports">Reports</a>
+        <a href="/login">Login</a>
+        <a href="/logout">Logout</a>
     </nav>
+
     <div class="content">
         {% block content %}
         <h1>Welcome to the SBL System</h1>
         <p>Group 13 — CPS406 Winter 2026</p>
+
+        {% if username and role %}
+            <p><strong>Logged in as:</strong> {{ username }} ({{ role }})</p>
+        {% else %}
+            <p><strong>Not logged in.</strong></p>
+        {% endif %}
+
+        {% if approval_message %}
+            <p><strong>{{ approval_message }}</strong></p>
+        {% endif %}
+
+        {% if username %}
+            <p>
+                <a href="/approve">Approve Sprint Scope</a>
+            </p>
+        {% endif %}
+
         {% endblock %}
     </div>
 </body>
