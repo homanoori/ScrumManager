@@ -16,6 +16,53 @@
     <div class="content">
         <h1>Sprint Backlog</h1>
         <!-- Homa: sprint lock status and controls go here -->
+         {% for sprint in sprints %}
+        <div class="sprint-card">
+            <h2>Sprint #{{ sprint[0] }}</h2>
+            <p>Capacity: {{ sprint[1] }}</p>
+            <p>Status: <strong>{{ sprint[2] }}</strong></p>
+
+            {% if sprint[2] != "Complete" %}
+            <form action="/sprint/{{ sprint[0] }}/status" method="POST">
+                <button type="submit">
+                    {% if sprint[2] == "Planned" %}
+                        Start Sprint
+                    {% elif sprint[2] == "Active" %}
+                        Complete Sprint
+                    {% endif %}
+                </button>
+            </form>
+            {% else %}
+            <p style="color: green;">✓ Sprint Complete</p>
+            {% endif %}
+
+            <!-- PBIs locked inside this sprint -->
+            <h3>Sprint Items</h3>
+            {% set has_items = [] %}
+            {% for pbi in sprint_pbis %}
+                {% if pbi[5] == sprint[0] %}
+                    {% set _ = has_items.append(1) %}
+                    <div class="pbi-item">
+                        <span><strong>{{ pbi[1] }}</strong></span>
+                        <span>Priority: {{ pbi[2] }}</span>
+                        <span>Effort: {{ pbi[3] }}</span>
+                        <span>Status: {{ pbi[4] }}</span>
+                        {% if sprint[2] == "Active" %}
+                        <span class="locked-badge">🔒 Locked</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            {% if has_items | length == 0 %}
+                <p>No items in this sprint yet.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if not sprints %}
+            <p>No sprints created yet.</p>
+        {% endif %}
+
         <!-- Setayesh: approval history display goes here -->
         <p>Sprint items will appear here.</p>
     </div>
