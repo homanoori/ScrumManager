@@ -1,6 +1,6 @@
 # app.py
-from flask import Flask, render_template
-from database import init_db
+from flask import Flask, render_template, redirect, request
+from database import init_db, get_connection
 
 app = Flask(__name__)
 
@@ -18,8 +18,10 @@ def sprint():
     c = conn.cursor()
     c.execute("SELECT * FROM sprint")
     sprints = c.fetchall()
+    c.execute("SELECT * FROM pbi WHERE sprint_id IS NOT NULL")
+    sprint_pbis = c.fetchall()
     conn.close()
-    return render_template("sprint.html", sprints=sprints)
+    return render_template("sprint.html", sprints=sprints, sprint_pbis=sprint_pbis)
 
 @app.route("/sprint/<int:sprint_id>/status", methods=["POST"])
 def update_sprint_status(sprint_id):
