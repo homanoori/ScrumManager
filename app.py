@@ -260,11 +260,6 @@ def backlog_add():
 
 # --- Sprint Backlog (SP-02) ---
 
-@app.route("/sprint")
-def sprint():
-    sprints = get_all_sprints()
-    return render_template("sprint.html", sprints=sprints)
-
 
 @app.route("/sprint/propose", methods=["POST"])
 def sprint_propose():
