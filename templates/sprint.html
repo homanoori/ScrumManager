@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <title>Sprint Backlog</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+        th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+        th { background: #333; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .badge-H { color: #c0392b; font-weight: bold; }
+        .badge-M { color: #e67e22; font-weight: bold; }
+        .badge-L { color: #27ae60; font-weight: bold; }
+        .error-box { background: #fde8e8; border: 1px solid #e74c3c; padding: 12px 16px;
+                     border-radius: 4px; color: #c0392b; margin: 1rem 0; }
+        .proposal-box { background: #eaf4fb; border: 1px solid #3498db; padding: 16px;
+                        border-radius: 4px; margin: 1rem 0; }
+        form.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
+        form.row label { display: block; font-size: 0.85rem; margin-bottom: 2px; }
+        form.row input { padding: 6px 8px; border: 1px solid #ccc; border-radius: 3px; }
+        form.row button { padding: 7px 16px; background: #2980b9; color: white; border: none;
+                          border-radius: 3px; cursor: pointer; }
+        button.confirm { background: #27ae60; }
+        button.confirm:hover { background: #219150; }
+    </style>
 </head>
 <body>
     <nav>
@@ -64,7 +84,108 @@
         {% endif %}
 
         <!-- Setayesh: approval history display goes here -->
-        <p>Sprint items will appear here.</p>
+
+        <!-- ================================================================
+             SP-02: Sprint Proposal
+             Step 1 — Enter capacity and click "Propose Sprint"
+             ================================================================ -->
+        <h2>Propose a New Sprint</h2>
+        <form class="row" action="/sprint/propose" method="post">
+            <div>
+                <label>Sprint Capacity (hours)</label>
+                <input type="number" name="capacity" min="1" step="0.5" required
+                       value="{{ proposal_capacity or '' }}" placeholder="e.g. 40">
+            </div>
+            <div>
+                <button type="submit">Propose Sprint</button>
+            </div>
+        </form>
+
+        <!-- Error message when nothing fits or backlog is empty -->
+        {% if proposal_error %}
+            <div class="error-box">{{ proposal_error }}</div>
+        {% endif %}
+
+        <!-- ================================================================
+             Step 2 — Show proposed PBIs and let the user confirm
+             ================================================================ -->
+        {% if proposed %}
+        <div class="proposal-box">
+            <h3>Proposed Items (capacity: {{ proposal_capacity }} h)</h3>
+            <p>These items were selected by sorting on priority (H first, then M, then L).
+               Ties in priority are broken by effort (smallest first) to fit as many items
+               as possible without exceeding the capacity.</p>
+
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Title</th><th>Priority</th><th>Effort (h)</th></tr>
+                </thead>
+                <tbody>
+                {% for pbi in proposed %}
+                    <tr>
+                        <td>{{ pbi.id }}</td>
+                        <td>{{ pbi.title }}</td>
+                        <td class="badge-{{ pbi.priority }}">{{ pbi.priority }}</td>
+                        <td>{{ pbi.effort }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p><strong>Total effort:</strong>
+               {{ proposed | sum(attribute='effort') }} /
+               {{ proposal_capacity }} h</p>
+
+            <!-- Step 3 — Confirm creates the sprint row and assigns PBIs -->
+            <form action="/sprint/create" method="post" style="margin-top: 1rem;">
+                <!-- Pass capacity and all proposed PBI IDs as hidden fields -->
+                <input type="hidden" name="capacity" value="{{ proposal_capacity }}">
+                {% for pbi in proposed %}
+                    <input type="hidden" name="pbi_ids" value="{{ pbi.id }}">
+                {% endfor %}
+
+                <label><strong>Sprint Start Date</strong> (optional, for burndown chart)</label><br>
+                <input type="date" name="start_date" style="margin: 6px 0;">
+                <br>
+                <label><strong>Sprint Duration (days)</strong></label><br>
+                <input type="number" name="duration_days" value="14" min="1" style="margin: 6px 0; width: 80px;">
+                <br><br>
+                <button type="submit" class="confirm">Confirm — Create Sprint</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- ================================================================
+             Existing sprints
+             ================================================================ -->
+        <h2>Existing Sprints</h2>
+        {% if sprints %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Sprint #</th>
+                    <th>Capacity (h)</th>
+                    <th>Status</th>
+                    <th>Start Date</th>
+                    <th>Duration (days)</th>
+                    <th>Reports</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in sprints %}
+                <tr>
+                    <td>{{ s[0] }}</td>
+                    <td>{{ s[1] }}</td>
+                    <td>{{ s[2] }}</td>
+                    <td>{{ s[3] or '—' }}</td>
+                    <td>{{ s[4] or 14 }}</td>
+                    <td><a href="/reports/{{ s[0] }}">View Burndown</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>No sprints created yet. Use the form above to propose one.</p>
+        {% endif %}
     </div>
 </body>
 </html>

@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <title>Product Backlog</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+        th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+        th { background: #333; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .badge-H { color: #c0392b; font-weight: bold; }
+        .badge-M { color: #e67e22; font-weight: bold; }
+        .badge-L { color: #27ae60; font-weight: bold; }
+        form.inline { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1.5rem; align-items: flex-end; }
+        form.inline label { display: block; font-size: 0.85rem; margin-bottom: 2px; }
+        form.inline input, form.inline select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 3px; }
+        form.inline button { padding: 7px 16px; background: #333; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    </style>
 </head>
 <body>
     <nav>
@@ -17,7 +30,59 @@
         <h1>Product Backlog</h1>
         <!-- Sasan: display priority and effort fields here -->
         <!-- Sasan: hide edit buttons if user is client -->
-        <p>Backlog items will appear here.</p>
+
+        <h2>Add New PBI</h2>
+        <form class="inline" action="/backlog/add" method="post">
+            <div>
+                <label>Title</label>
+                <input type="text" name="title" required placeholder="e.g. User login page">
+            </div>
+            <div>
+                <label>Priority</label>
+                <select name="priority">
+                    <option value="H">H — High</option>
+                    <option value="M">M — Medium</option>
+                    <option value="L">L — Low</option>
+                </select>
+            </div>
+            <div>
+                <label>Effort (hours)</label>
+                <input type="number" name="effort" min="0.5" step="0.5" required placeholder="e.g. 5">
+            </div>
+            <div>
+                <button type="submit">Add PBI</button>
+            </div>
+        </form>
+
+        <h2>All PBIs</h2>
+        {% if pbis %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Effort (h)</th>
+                    <th>Status</th>
+                    <th>Sprint</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for pbi in pbis %}
+                <tr>
+                    <td>{{ pbi[0] }}</td>
+                    <td>{{ pbi[1] }}</td>
+                    <td class="badge-{{ pbi[2] }}">{{ pbi[2] }}</td>
+                    <td>{{ pbi[3] }}</td>
+                    <td>{{ pbi[4] }}</td>
+                    <td>{% if pbi[5] %}Sprint {{ pbi[5] }}{% else %}—{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>No PBIs yet. Add one above.</p>
+        {% endif %}
     </div>
 </body>
 </html>
