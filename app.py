@@ -4,7 +4,7 @@ from database import init_db
 from routes.hamed_routes import hamed_bp
 from routes.homa_routes import homa_bp
 from routes.setayesh_routes import setayesh_bp
-from routes.sasan_routes import sasan_bp
+from routes.atena_routes import atena_bp
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -12,7 +12,7 @@ app.secret_key = "secret123"
 app.register_blueprint(hamed_bp)
 app.register_blueprint(homa_bp)
 app.register_blueprint(setayesh_bp)
-app.register_blueprint(sasan_bp)
+app.register_blueprint(atena_bp)
 
 @app.route("/")
 def index():
