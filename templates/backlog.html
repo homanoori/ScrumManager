@@ -30,7 +30,8 @@
         <h1>Product Backlog</h1>
         <!-- Sasan: display priority and effort fields here -->
         <!-- Sasan: hide edit buttons if user is client -->
-
+        
+        {% if role != "client" %}
         <h2>Add New PBI</h2>
         <form class="inline" action="/backlog/add" method="post">
             <div>
@@ -53,6 +54,7 @@
                 <button type="submit">Add PBI</button>
             </div>
         </form>
+        {% endif %}
 
         <h2>All PBIs</h2>
         {% if pbis %}
