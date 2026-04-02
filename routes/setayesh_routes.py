@@ -29,3 +29,20 @@ def approve():
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+@setayesh_bp.route('/tasks/update_status', methods=['POST'])
+def update_task_status():
+    task_id = request.form['task_id']
+    new_status = request.form['status']
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("UPDATE task SET status = ? WHERE id = ?", (new_status, task_id))
+    c.execute("SELECT pbi_id FROM task WHERE id = ?", (task_id,))
+    pbi_id = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM task WHERE pbi_id = ? AND status != 'Done'", (pbi_id,))
+    incomplete_count = c.fetchone()[0]
+    if incomplete_count == 0:
+        c.execute("UPDATE pbi SET status = 'Complete' WHERE id = ?", (pbi_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('hamed.tasks'))
