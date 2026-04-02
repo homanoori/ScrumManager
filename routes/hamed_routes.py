@@ -81,25 +81,6 @@ def generate_burndown_chart(sprint_id, total_effort, daily_logs, duration_days, 
     return f"charts/{filename}"
 
 
-@hamed_bp.route("/backlog")
-def backlog():
-    pbis = get_all_pbis()
-    return render_template("backlog.html", pbis=pbis)
-
-
-@hamed_bp.route("/backlog/add", methods=["POST"])
-def backlog_add():
-    title    = request.form["title"].strip()
-    priority = request.form["priority"]
-    effort   = request.form["effort"]
-    if title and priority in ("H", "M", "L"):
-        try:
-            add_pbi(title, priority, float(effort))
-        except ValueError:
-            pass
-    return redirect(url_for("hamed.backlog"))
-
-
 @hamed_bp.route("/sprint/propose", methods=["POST"])
 def sprint_propose():
     try:
