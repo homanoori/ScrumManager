@@ -1,19 +1,12 @@
 from flask import Flask, render_template, session, redirect, url_for, request
-from database import init_db
-
-from routes.hamed_routes import hamed_bp
-from routes.homa_routes import homa_bp
-from routes.setayesh_routes import setayesh_bp
-from routes.sasan_routes import sasan_bp
+from datetime import datetime
+from database import init_db, get_or_create_user, add_approval, get_all_tasks, get_all_pbis, update_task_status
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-app.register_blueprint(hamed_bp)
-app.register_blueprint(homa_bp)
-app.register_blueprint(setayesh_bp)
-app.register_blueprint(sasan_bp)
 
+# --- Atena: base route ---
 @app.route("/")
 def index():
     username = session.get("username")
@@ -25,6 +18,7 @@ def index():
         role=role,
         approval_message=approval_message
     )
+
 
 # --- Setayesh: login route ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -40,27 +34,53 @@ def login():
 
     return render_template('login.html')
 
-@app.route('/approve')
-def approve():
+
+# --- Setayesh: approval route ---
+@app.route('/approve/<int:sprint_id>')
+def approve(sprint_id):
     role = session.get('role')
+    username = session.get('username')
 
     if role != 'client':
         session['approval_message'] = "Only the client can approve sprint scope changes."
         return redirect(url_for('index'))
 
+    user_id = get_or_create_user(username, role)
+    approved_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    add_approval(user_id, sprint_id, approved_at)
+
     session['approval_message'] = "Sprint approved successfully."
     return redirect(url_for('index'))
+
+
+# --- Setayesh: tasks page ---
+@app.route('/tasks')
+def tasks():
+    tasks = get_all_tasks()
+    pbis = get_all_pbis()
+    return render_template('tasks.html', tasks=tasks, pbis=pbis)
+
+
+# --- Setayesh: task status update ---
+@app.route('/task/update-status/<int:task_id>', methods=['POST'])
+def change_task_status(task_id):
+    new_status = request.form['status']
+    update_task_status(task_id, new_status)
+    return redirect(url_for('tasks'))
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
+
 # --- Hamed: add burndown + sprint proposal routes in his branch ---
 
 # --- Homa: add sprint lock + status change routes in her branch ---
 
 # --- Sasan: add client view routes in his branch ---
+
 
 if __name__ == "__main__":
     init_db()
