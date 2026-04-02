@@ -28,7 +28,6 @@
     </nav>
     <div class="content">
         <h1>Tasks</h1>
-        <!-- Setayesh: task status buttons (Not Started, In Progress, Done) go here -->
 
         <!-- ================================================================
              Add a task to a PBI
@@ -101,6 +100,7 @@
                     <th>Effort (h)</th>
                     <th>Status</th>
                     <th>PBI</th>
+                    <th>Update Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -111,6 +111,23 @@
                     <td>{{ t[2] }}</td>
                     <td>{{ t[3] }}</td>
                     <td>{{ t[5] or '—' }}</td>
+                    <td>
+                        <form action="/tasks/update_status" method="post" style="display:inline">
+                            <input type="hidden" name="task_id" value="{{ t[0] }}">
+                            <input type="hidden" name="status" value="Not Started">
+                            <button type="submit">Not Started</button>
+                        </form>
+                        <form action="/tasks/update_status" method="post" style="display:inline">
+                            <input type="hidden" name="task_id" value="{{ t[0] }}">
+                            <input type="hidden" name="status" value="In Progress">
+                            <button type="submit">In Progress</button>
+                        </form>
+                        <form action="/tasks/update_status" method="post" style="display:inline">
+                            <input type="hidden" name="task_id" value="{{ t[0] }}">
+                            <input type="hidden" name="status" value="Done">
+                            <button type="submit">Done</button>
+                        </form>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
