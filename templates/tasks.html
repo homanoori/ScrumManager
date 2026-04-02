@@ -4,20 +4,7 @@
     <meta charset="UTF-8">
     <title>Tasks</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
-        th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
-        th { background: #333; color: white; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        form.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
-        form.row label { display: block; font-size: 0.85rem; margin-bottom: 2px; }
-        form.row input, form.row select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 3px; }
-        form.row button { padding: 7px 16px; color: white; border: none; border-radius: 3px; cursor: pointer; }
-        .btn-add { background: #333; }
-        .btn-log { background: #27ae60; }
-        .btn-update { background: #2980b9; }
-        h2 { margin-top: 2rem; }
-    </style>
+   
 </head>
 <body>
     <nav>
@@ -26,10 +13,15 @@
         <a href="/sprint">Sprint Backlog</a>
         <a href="/tasks">Tasks</a>
         <a href="/reports">Reports</a>
+        {% if session.get('username') %}
+            <a href="/logout" onclick="return confirm('Are you sure you want to log out?')">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
     </nav>
     <div class="content">
         <h1>Tasks</h1>
-
+        {% if role != "client" %}
         <h2>Add Task to a PBI</h2>
         <form class="row" action="/tasks/add" method="post">
             <div>
@@ -54,6 +46,7 @@
                 <button type="submit" class="btn-add">Add Task</button>
             </div>
         </form>
+        {% endif %}
 
         <h2>Log Effort Spent</h2>
         <p>Record how many hours were actually spent on a task on a given day.

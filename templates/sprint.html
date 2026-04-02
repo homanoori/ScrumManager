@@ -4,26 +4,7 @@
     <meta charset="UTF-8">
     <title>Sprint Backlog</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
-        th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
-        th { background: #333; color: white; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .badge-H { color: #c0392b; font-weight: bold; }
-        .badge-M { color: #e67e22; font-weight: bold; }
-        .badge-L { color: #27ae60; font-weight: bold; }
-        .error-box { background: #fde8e8; border: 1px solid #e74c3c; padding: 12px 16px;
-                     border-radius: 4px; color: #c0392b; margin: 1rem 0; }
-        .proposal-box { background: #eaf4fb; border: 1px solid #3498db; padding: 16px;
-                        border-radius: 4px; margin: 1rem 0; }
-        form.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
-        form.row label { display: block; font-size: 0.85rem; margin-bottom: 2px; }
-        form.row input { padding: 6px 8px; border: 1px solid #ccc; border-radius: 3px; }
-        form.row button { padding: 7px 16px; background: #2980b9; color: white; border: none;
-                          border-radius: 3px; cursor: pointer; }
-        button.confirm { background: #27ae60; }
-        button.confirm:hover { background: #219150; }
-    </style>
+    
 </head>
 <body>
     <nav>
@@ -32,6 +13,11 @@
         <a href="/sprint">Sprint Backlog</a>
         <a href="/tasks">Tasks</a>
         <a href="/reports">Reports</a>
+        {% if session.get('username') %}
+            <a href="/logout" onclick="return confirm('Are you sure you want to log out?')">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
     </nav>
     <div class="content">
         <h1>Sprint Backlog</h1>
@@ -89,6 +75,7 @@
              SP-02: Sprint Proposal
              Step 1 — Enter capacity and click "Propose Sprint"
              ================================================================ -->
+        {% if role != "client" %}
         <h2>Propose a New Sprint</h2>
         <form class="row" action="/sprint/propose" method="post">
             <div>
@@ -100,6 +87,7 @@
                 <button type="submit">Propose Sprint</button>
             </div>
         </form>
+        {% endif %}
 
         <!-- Error message when nothing fits or backlog is empty -->
         {% if proposal_error %}
