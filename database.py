@@ -114,7 +114,7 @@ def get_all_tasks():
     conn = get_connection()
     c = conn.cursor()
 
-    c.execute("SELECT * FROM task")
+    c.execute("SELECT t.id, t.title, t.effort, t.status, t.pbi_id, p.title FROM task t LEFT JOIN pbi p ON t.pbi_id = p.id ORDER BY t.id")
     rows = c.fetchall()
 
     conn.close()
