@@ -15,6 +15,7 @@
         form.row button { padding: 7px 16px; color: white; border: none; border-radius: 3px; cursor: pointer; }
         .btn-add { background: #333; }
         .btn-log { background: #27ae60; }
+        .btn-update { background: #2980b9; }
         h2 { margin-top: 2rem; }
     </style>
 </head>
@@ -29,9 +30,6 @@
     <div class="content">
         <h1>Tasks</h1>
 
-        <!-- ================================================================
-             Add a task to a PBI
-             ================================================================ -->
         <h2>Add Task to a PBI</h2>
         <form class="row" action="/tasks/add" method="post">
             <div>
@@ -46,9 +44,9 @@
                 <label>Belongs to PBI</label>
                 <select name="pbi_id" required>
                     {% for pbi in pbis %}
-                        <option value="{{ pbi[0] }}">[{{ pbi[2] }}] {{ pbi[1] }}</option>
+                        <option value="{{ pbi[0] }}">{{ pbi[1] }}</option>
                     {% else %}
-                        <option disabled>No PBIs yet — add one on the Backlog page</option>
+                        <option disabled>No PBIs yet</option>
                     {% endfor %}
                 </select>
             </div>
@@ -57,39 +55,6 @@
             </div>
         </form>
 
-        <!-- ================================================================
-             SP-07: Log actual effort spent on a task (feeds the burndown chart)
-             ================================================================ -->
-        <h2>Log Effort Spent</h2>
-        <p>Record how many hours were actually spent on a task on a given day.
-           This data is used to build the burndown chart in Reports.</p>
-        <form class="row" action="/log_effort" method="post">
-            <div>
-                <label>Task</label>
-                <select name="task_id" required>
-                    {% for t in tasks %}
-                        <option value="{{ t[0] }}">{{ t[1] }} ({{ t[0] }})</option>
-                    {% else %}
-                        <option disabled>No tasks yet — add one above</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label>Date</label>
-                <input type="date" name="date" required>
-            </div>
-            <div>
-                <label>Effort Spent (h)</label>
-                <input type="number" name="actual_effort" min="0.5" step="0.5" required placeholder="e.g. 2">
-            </div>
-            <div>
-                <button type="submit" class="btn-log">Log Effort</button>
-            </div>
-        </form>
-
-        <!-- ================================================================
-             Task list
-             ================================================================ -->
         <h2>All Tasks</h2>
         {% if tasks %}
         <table>
@@ -97,7 +62,6 @@
                 <tr>
                     <th>#</th>
                     <th>Title</th>
-                    <th>Effort (h)</th>
                     <th>Status</th>
                     <th>PBI</th>
                     <th>Update Status</th>
@@ -126,6 +90,7 @@
                             <input type="hidden" name="task_id" value="{{ t[0] }}">
                             <input type="hidden" name="status" value="Done">
                             <button type="submit">Done</button>
+
                         </form>
                     </td>
                 </tr>
@@ -133,7 +98,7 @@
             </tbody>
         </table>
         {% else %}
-            <p>No tasks yet. Add one above.</p>
+            <p>No tasks yet.</p>
         {% endif %}
     </div>
 </body>

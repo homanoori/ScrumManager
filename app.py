@@ -14,6 +14,7 @@ app.register_blueprint(homa_bp)
 app.register_blueprint(setayesh_bp)
 app.register_blueprint(atena_bp)
 
+# --- Atena: base route ---
 @app.route("/")
 def index():
     username = session.get("username")
