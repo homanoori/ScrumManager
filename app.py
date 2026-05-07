@@ -1,7 +1,10 @@
 from flask import Flask, render_template, session, request
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from models import db
+from flask_login import LoginManager
+from flask_bcrypt import Bcrypt
+from models import db, User
+from routes.auth_routes import auth_bp
 import os
 
 from routes.hamed_routes import hamed_bp
@@ -18,10 +21,22 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "fallback-secret")
 db.init_app(app)
 migrate = Migrate(app, db)
 
+bcrypt = Bcrypt(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "auth.login"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 app.register_blueprint(hamed_bp)
 app.register_blueprint(homa_bp)
 app.register_blueprint(setayesh_bp)
 app.register_blueprint(atena_bp)
+app.register_blueprint(auth_bp)
 
 # --- Atena: base route ---
 @app.route("/")
