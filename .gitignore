@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 sbl.db
+.env
+*.db
+__pycache__/

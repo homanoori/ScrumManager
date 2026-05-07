@@ -1,13 +1,22 @@
 from flask import Flask, render_template, session, request
-from database import init_db
+from flask_migrate import Migrate
+from dotenv import load_dotenv
+from models import db
+import os
 
 from routes.hamed_routes import hamed_bp
 from routes.homa_routes import homa_bp
 from routes.setayesh_routes import setayesh_bp
 from routes.atena_routes import atena_bp
 
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "fallback-secret")
+db.init_app(app)
+migrate = Migrate(app, db)
 
 app.register_blueprint(hamed_bp)
 app.register_blueprint(homa_bp)
@@ -28,5 +37,4 @@ def index():
     )
 
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)

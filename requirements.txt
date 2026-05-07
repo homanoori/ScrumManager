@@ -1,2 +1,6 @@
 flask
 matplotlib
+flask-sqlalchemy
+flask-migrate
+psycopg2-binary
+python-dotenv
