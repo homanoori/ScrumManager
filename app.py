@@ -1,7 +1,7 @@
 from flask import Flask, render_template, session, request
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from flask_login import LoginManager
+from flask_login import LoginManager, login_required, current_user
 from flask_bcrypt import Bcrypt
 from models import db, User
 from routes.auth_routes import auth_bp
@@ -40,14 +40,14 @@ app.register_blueprint(auth_bp)
 
 # --- Atena: base route ---
 @app.route("/")
+@login_required
 def index():
-    username = session.get("username")
-    role = session.get("role")
     approval_message = session.pop("approval_message", None)
+
     return render_template(
         "base.html",
-        username=username,
-        role=role,
+        username=current_user.username,
+        role=current_user.role,
         approval_message=approval_message
     )
 

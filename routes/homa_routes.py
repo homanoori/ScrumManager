@@ -1,10 +1,12 @@
 from flask import Blueprint, redirect, request
 from database import get_connection
+from flask_login import login_required, current_user
 
 homa_bp = Blueprint("homa", __name__)
 
 
 @homa_bp.route("/sprint")
+@login_required
 def sprint():
     conn = get_connection()
     c = conn.cursor()
@@ -18,6 +20,7 @@ def sprint():
 
 
 @homa_bp.route("/sprint/<int:sprint_id>/status", methods=["POST"])
+@login_required
 def update_sprint_status(sprint_id):
     conn = get_connection()
     c = conn.cursor()

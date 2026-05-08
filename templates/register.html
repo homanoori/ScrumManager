@@ -5,8 +5,8 @@
     <div class="auth-card">
         <div class="auth-icon">⚡</div>
 
-        <h1>Welcome back</h1>
-        <p>Log in to continue to ScrumManager.</p>
+        <h1>Create account</h1>
+        <p>Choose your role and create your ScrumManager login.</p>
 
         <form method="POST" class="auth-form">
             <label for="username">Username</label>
@@ -14,7 +14,7 @@
                 id="username"
                 type="text"
                 name="username"
-                placeholder="Enter your username"
+                placeholder="Choose a username"
                 required
             >
 
@@ -23,16 +23,23 @@
                 id="password"
                 type="password"
                 name="password"
-                placeholder="Enter your password"
+                placeholder="Create a password"
                 required
             >
 
-            <button type="submit">Log In</button>
+            <label for="role">Role</label>
+            <select id="role" name="role" required>
+                <option value="developer">Developer</option>
+                <option value="client">Client</option>
+                <option value="scrum_master">Scrum Master</option>
+            </select>
+
+            <button type="submit">Create Account</button>
         </form>
 
         <p class="auth-link">
-            Don’t have an account?
-            <a href="/auth/register">Create one</a>
+            Already have an account?
+            <a href="/auth/login">Log in</a>
         </p>
     </div>
 </div>

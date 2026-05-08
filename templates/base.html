@@ -12,32 +12,45 @@
         <a href="/sprint">Sprint Backlog</a>
         <a href="/tasks">Tasks</a>
         <a href="/reports">Reports</a>
-        {% if session.get('username') %}
-            <a href="/logout" onclick="return confirm('Are you sure you want to log out?')">Logout</a>
+
+        {% if current_user.is_authenticated %}
+            <span>Hi, {{ current_user.username }}</span>
+            <a href="/auth/logout" onclick="return confirm('Are you sure you want to log out?')">Logout</a>
         {% else %}
-            <a href="/login">Login</a>
+            <a href="/auth/login">Login</a>
+            <a href="/auth/register">Register</a>
         {% endif %}
     </nav>
 
     <div class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <p class="flash {{ category }}">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
         {% block content %}
         <h1>Welcome to the SBL System</h1>
-        <p>Group 13 — CPS406 Winter 2026</p>
 
-        {% if username and role %}
-            <p><strong>Logged in as:</strong> {{ username }} ({{ role }})</p>
+        {% if current_user.is_authenticated %}
+            <p>
+                <strong>Logged in as:</strong>
+                {{ current_user.username }} ({{ current_user.role }})
+            </p>
+
+            <p>
+                <a href="/approve">Approve Sprint Scope</a>
+            </p>
         {% else %}
             <p><strong>Not logged in.</strong></p>
         {% endif %}
 
         {% if approval_message %}
             <p><strong>{{ approval_message }}</strong></p>
-        {% endif %}
-
-        {% if username %}
-            <p>
-                <a href="/approve">Approve Sprint Scope</a>
-            </p>
         {% endif %}
 
         {% endblock %}
