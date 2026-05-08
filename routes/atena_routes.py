@@ -1,22 +1,23 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask_login import login_required, current_user
 from database import get_connection
 
 atena_bp = Blueprint("atena", __name__)
 
 @atena_bp.route("/backlog")
+@login_required
 def backlog():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id, title, priority, effort, status, sprint_id FROM pbi ORDER BY CASE priority WHEN 'H' THEN 1 WHEN 'M' THEN 2 WHEN 'L' THEN 3 END, effort ASC")
     pbis = cursor.fetchall()
     conn.close()
-    role = session.get("role")
-    return render_template("backlog.html", pbis=pbis, role=role)
+    return render_template("backlog.html", pbis=pbis, role=current_user.role)
 
 @atena_bp.route("/backlog/add", methods=["POST"])
+@login_required
 def add_pbi():
-    role = session.get("role")
-    if role == "client":
+    if current_user.role == "client":
         return redirect(url_for("atena.backlog"))
     title = request.form["title"]
     priority = request.form["priority"]

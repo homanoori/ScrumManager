@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+from flask_login import login_required, current_user
 
 import matplotlib
 matplotlib.use("Agg")
@@ -82,6 +83,7 @@ def generate_burndown_chart(sprint_id, total_effort, daily_logs, duration_days, 
 
 
 @hamed_bp.route("/sprint/propose", methods=["POST"])
+@login_required
 def sprint_propose():
     try:
         capacity = float(request.form["capacity"])
@@ -104,6 +106,7 @@ def sprint_propose():
 
 
 @hamed_bp.route("/sprint/create", methods=["POST"])
+@login_required
 def sprint_create():
     try:
         capacity = float(request.form["capacity"])
@@ -119,6 +122,7 @@ def sprint_create():
 
 
 @hamed_bp.route("/tasks")
+@login_required
 def tasks():
     all_tasks = get_all_tasks()
     all_pbis  = get_all_pbis()
@@ -126,6 +130,7 @@ def tasks():
 
 
 @hamed_bp.route("/tasks/add", methods=["POST"])
+@login_required
 def tasks_add():
     title  = request.form["title"].strip()
     effort = request.form["effort"]
@@ -139,6 +144,7 @@ def tasks_add():
 
 
 @hamed_bp.route("/log_effort", methods=["POST"])
+@login_required
 def log_effort_route():
     try:
         task_id       = int(request.form["task_id"])
@@ -152,6 +158,7 @@ def log_effort_route():
 
 
 @hamed_bp.route("/reports")
+@login_required
 def reports():
     sprints  = get_all_sprints()
     velocity = get_velocity_data()
@@ -159,6 +166,7 @@ def reports():
 
 
 @hamed_bp.route("/reports/<int:sprint_id>")
+@login_required
 def reports_sprint(sprint_id):
     sprint_row = get_sprint(sprint_id)
     if sprint_row is None:
