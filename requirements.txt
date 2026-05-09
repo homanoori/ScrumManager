@@ -1,6 +1,10 @@
 flask
-matplotlib
 flask-sqlalchemy
 flask-migrate
+flask-login
+flask-bcrypt
+flask-wtf
 psycopg2-binary
 python-dotenv
+matplotlib
+werkzeug
