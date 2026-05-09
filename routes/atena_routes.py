@@ -1,17 +1,20 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
-from database import get_connection
+from models import db, PBI
 
 atena_bp = Blueprint("atena", __name__)
 
 @atena_bp.route("/backlog")
 @login_required
 def backlog():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, title, priority, effort, status, sprint_id FROM pbi ORDER BY CASE priority WHEN 'H' THEN 1 WHEN 'M' THEN 2 WHEN 'L' THEN 3 END, effort ASC")
-    pbis = cursor.fetchall()
-    conn.close()
+    pbis = PBI.query.order_by(
+        db.case(
+            (PBI.priority == 'H', 1),
+            (PBI.priority == 'M', 2),
+            (PBI.priority == 'L', 3),
+        ),
+        PBI.effort.asc()
+    ).all()
     return render_template("backlog.html", pbis=pbis, role=current_user.role)
 
 @atena_bp.route("/backlog/add", methods=["POST"])
@@ -21,10 +24,8 @@ def add_pbi():
         return redirect(url_for("atena.backlog"))
     title = request.form["title"]
     priority = request.form["priority"]
-    effort = request.form["effort"]
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO pbi (title, priority, effort, status) VALUES (?, ?, ?, 'Incomplete')", (title, priority, effort))
-    conn.commit()
-    conn.close()
+    effort = float(request.form["effort"])
+    pbi = PBI(title=title, priority=priority, effort=effort, status="Incomplete")
+    db.session.add(pbi)
+    db.session.commit()
     return redirect(url_for("atena.backlog"))

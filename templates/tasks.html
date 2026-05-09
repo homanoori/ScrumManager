@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Tasks</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-   
 </head>
 <body>
     <nav>
@@ -13,15 +12,16 @@
         <a href="/sprint">Sprint Backlog</a>
         <a href="/tasks">Tasks</a>
         <a href="/reports">Reports</a>
-        {% if session.get('username') %}
-            <a href="/logout" onclick="return confirm('Are you sure you want to log out?')">Logout</a>
+        {% if current_user.is_authenticated %}
+            <span>{{ current_user.username }} ({{ current_user.role }})</span>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
-            <a href="/login">Login</a>
+            <a href="{{ url_for('auth.login') }}">Login</a>
         {% endif %}
     </nav>
     <div class="content">
         <h1>Tasks</h1>
-        {% if role != "client" %}
+        {% if current_user.role != "client" %}
         <h2>Add Task to a PBI</h2>
         <form class="row" action="/tasks/add" method="post">
             <div>
@@ -36,7 +36,7 @@
                 <label>Belongs to PBI</label>
                 <select name="pbi_id" required>
                     {% for pbi in pbis %}
-                        <option value="{{ pbi[0] }}">{{ pbi[1] }}</option>
+                        <option value="{{ pbi.id }}">{{ pbi.title }}</option>
                     {% else %}
                         <option disabled>No PBIs yet</option>
                     {% endfor %}
@@ -52,27 +52,27 @@
         <p>Record how many hours were actually spent on a task on a given day.
             This data is used to build the burndown chart in Reports.</p>
         <form class="row" action="/log_effort" method="post">
-                <div>
-                    <label>Task</label>
-                    <select name="task_id" required>
-                        {% for t in tasks %}
-                            <option value="{{ t[0] }}">{{ t[1] }} ({{ t[0] }})</option>
-                        {% else %}
-                            <option disabled>No tasks yet — add one above</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label>Date</label>
-                    <input type="date" name="date" required>
-                </div>
-                <div>
-                    <label>Effort Spent (h)</label>
-                    <input type="number" name="actual_effort" min="0.5" step="0.5" required placeholder="e.g. 2">
-                </div>
-                <div>
-                    <button type="submit" class="btn-log">Log Effort</button>
-                </div>
+            <div>
+                <label>Task</label>
+                <select name="task_id" required>
+                    {% for t in tasks %}
+                        <option value="{{ t.id }}">{{ t.title }} ({{ t.id }})</option>
+                    {% else %}
+                        <option disabled>No tasks yet — add one above</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Date</label>
+                <input type="date" name="date" required>
+            </div>
+            <div>
+                <label>Effort Spent (h)</label>
+                <input type="number" name="actual_effort" min="0.5" step="0.5" required placeholder="e.g. 2">
+            </div>
+            <div>
+                <button type="submit" class="btn-log">Log Effort</button>
+            </div>
         </form>
 
         <h2>All Tasks</h2>
@@ -90,26 +90,25 @@
             <tbody>
             {% for t in tasks %}
                 <tr>
-                    <td>{{ t[0] }}</td>
-                    <td>{{ t[1] }}</td>
-                    <td>{{ t[3] }}</td>
-                    <td>{{ t[5] or '—' }}</td>
+                    <td>{{ t.id }}</td>
+                    <td>{{ t.title }}</td>
+                    <td>{{ t.status }}</td>
+                    <td>{{ t.pbi.title if t.pbi else '—' }}</td>
                     <td>
                         <form action="/tasks/update_status" method="post" style="display:inline">
-                            <input type="hidden" name="task_id" value="{{ t[0] }}">
+                            <input type="hidden" name="task_id" value="{{ t.id }}">
                             <input type="hidden" name="status" value="Not Started">
                             <button type="submit">Not Started</button>
                         </form>
                         <form action="/tasks/update_status" method="post" style="display:inline">
-                            <input type="hidden" name="task_id" value="{{ t[0] }}">
+                            <input type="hidden" name="task_id" value="{{ t.id }}">
                             <input type="hidden" name="status" value="In Progress">
                             <button type="submit">In Progress</button>
                         </form>
                         <form action="/tasks/update_status" method="post" style="display:inline">
-                            <input type="hidden" name="task_id" value="{{ t[0] }}">
+                            <input type="hidden" name="task_id" value="{{ t.id }}">
                             <input type="hidden" name="status" value="Done">
                             <button type="submit">Done</button>
-
                         </form>
                     </td>
                 </tr>

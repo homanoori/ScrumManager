@@ -13,27 +13,28 @@
         <a href="/sprint">Sprint Backlog</a>
         <a href="/tasks">Tasks</a>
         <a href="/reports">Reports</a>
-        {% if session.get('username') %}
-            <a href="/logout" onclick="return confirm('Are you sure you want to log out?')">Logout</a>
+        {% if current_user.is_authenticated %}
+            <span>{{ current_user.username }} ({{ current_user.role }})</span>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
-            <a href="/login">Login</a>
+            <a href="{{ url_for('auth.login') }}">Login</a>
         {% endif %}
     </nav>
     <div class="content">
         <h1>Sprint Backlog</h1>
         <!-- Homa: sprint lock status and controls go here -->
-         {% for sprint in sprints %}
+        {% for sprint in sprints %}
         <div class="sprint-card">
-            <h2>Sprint #{{ sprint[0] }}</h2>
-            <p>Capacity: {{ sprint[1] }}</p>
-            <p>Status: <strong>{{ sprint[2] }}</strong></p>
+            <h2>Sprint #{{ sprint.id }}</h2>
+            <p>Capacity: {{ sprint.capacity }}</p>
+            <p>Status: <strong>{{ sprint.status }}</strong></p>
 
-            {% if sprint[2] != "Complete" %}
-            <form action="/sprint/{{ sprint[0] }}/status" method="POST">
+            {% if sprint.status != "Complete" %}
+            <form action="/sprint/{{ sprint.id }}/status" method="POST">
                 <button type="submit">
-                    {% if sprint[2] == "Planned" %}
+                    {% if sprint.status == "Planned" %}
                         Start Sprint
-                    {% elif sprint[2] == "Active" %}
+                    {% elif sprint.status == "Active" %}
                         Complete Sprint
                     {% endif %}
                 </button>
@@ -46,14 +47,14 @@
             <h3>Sprint Items</h3>
             {% set has_items = [] %}
             {% for pbi in sprint_pbis %}
-                {% if pbi[5] == sprint[0] %}
+                {% if pbi.sprint_id == sprint.id %}
                     {% set _ = has_items.append(1) %}
                     <div class="pbi-item">
-                        <span><strong>{{ pbi[1] }}</strong></span>
-                        <span>Priority: {{ pbi[2] }}</span>
-                        <span>Effort: {{ pbi[3] }}</span>
-                        <span>Status: {{ pbi[4] }}</span>
-                        {% if sprint[2] == "Active" %}
+                        <span><strong>{{ pbi.title }}</strong></span>
+                        <span>Priority: {{ pbi.priority }}</span>
+                        <span>Effort: {{ pbi.effort }}</span>
+                        <span>Status: {{ pbi.status }}</span>
+                        {% if sprint.status == "Active" %}
                         <span class="locked-badge">🔒 Locked</span>
                         {% endif %}
                     </div>
@@ -75,7 +76,7 @@
              SP-02: Sprint Proposal
              Step 1 — Enter capacity and click "Propose Sprint"
              ================================================================ -->
-        {% if role != "client" %}
+        {% if current_user.role != "client" %}
         <h2>Propose a New Sprint</h2>
         <form class="row" action="/sprint/propose" method="post">
             <div>
@@ -123,9 +124,7 @@
                {{ proposed | sum(attribute='effort') }} /
                {{ proposal_capacity }} h</p>
 
-            <!-- Step 3 — Confirm creates the sprint row and assigns PBIs -->
             <form action="/sprint/create" method="post" style="margin-top: 1rem;">
-                <!-- Pass capacity and all proposed PBI IDs as hidden fields -->
                 <input type="hidden" name="capacity" value="{{ proposal_capacity }}">
                 {% for pbi in proposed %}
                     <input type="hidden" name="pbi_ids" value="{{ pbi.id }}">
@@ -143,7 +142,7 @@
         {% endif %}
 
         <!-- ================================================================
-             Existing sprints
+             Existing Sprints
              ================================================================ -->
         <h2>Existing Sprints</h2>
         {% if sprints %}
@@ -153,20 +152,18 @@
                     <th>Sprint #</th>
                     <th>Capacity (h)</th>
                     <th>Status</th>
-                    <th>Start Date</th>
-                    <th>Duration (days)</th>
+                    <th>Created</th>
                     <th>Reports</th>
                 </tr>
             </thead>
             <tbody>
             {% for s in sprints %}
                 <tr>
-                    <td>{{ s[0] }}</td>
-                    <td>{{ s[1] }}</td>
-                    <td>{{ s[2] }}</td>
-                    <td>{{ s[3] or '—' }}</td>
-                    <td>{{ s[4] or 14 }}</td>
-                    <td><a href="/reports/{{ s[0] }}">View Burndown</a></td>
+                    <td>{{ s.id }}</td>
+                    <td>{{ s.capacity }}</td>
+                    <td>{{ s.status }}</td>
+                    <td>{{ s.created_at.strftime('%Y-%m-%d') if s.created_at else '—' }}</td>
+                    <td><a href="/reports/{{ s.id }}">View Burndown</a></td>
                 </tr>
             {% endfor %}
             </tbody>

@@ -60,12 +60,12 @@
             <tbody>
             {% for pbi in pbis %}
                 <tr>
-                    <td>{{ pbi[0] }}</td>
-                    <td>{{ pbi[1] }}</td>
-                    <td class="badge-{{ pbi[2] }}">{{ pbi[2] }}</td>
-                    <td>{{ pbi[3] }}</td>
-                    <td>{{ pbi[4] }}</td>
-                    <td>{% if pbi[5] %}Sprint {{ pbi[5] }}{% else %}—{% endif %}</td>
+                    <td>{{ pbi.id }}</td>
+                    <td>{{ pbi.title }}</td>
+                    <td class="badge-{{ pbi.priority }}">{{ pbi.priority }}</td>
+                    <td>{{ pbi.effort }}</td>
+                    <td>{{ pbi.status }}</td>
+                    <td>{% if pbi.sprint_id %}Sprint {{ pbi.sprint_id }}{% else %}—{% endif %}</td>
                 </tr>
             {% endfor %}
             </tbody>

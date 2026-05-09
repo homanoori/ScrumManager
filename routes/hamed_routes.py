@@ -1,41 +1,31 @@
 import os
 from datetime import datetime, timedelta
-from flask_login import login_required, current_user
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from flask import Blueprint, render_template, redirect, request, url_for
-from database import (
-    get_all_pbis, get_unassigned_pbis, add_pbi,
-    get_all_sprints, get_sprint, create_sprint, assign_pbis_to_sprint,
-    get_all_tasks, add_task,
-    log_effort,
-    get_daily_effort_for_sprint, get_sprint_total_effort, get_velocity_data,
-)
+from flask_login import login_required, current_user
+from models import db, PBI, Sprint, Task, EffortLog
 
 hamed_bp = Blueprint("hamed", __name__)
 
 
 def propose_sprint(capacity):
-    rows = get_unassigned_pbis()
-    if not rows:
+    pbis = PBI.query.filter_by(sprint_id=None, status="Incomplete").all()
+    if not pbis:
         return [], "The backlog has no incomplete, unassigned items to propose for a sprint."
-    pbis = [
-        {"id": r[0], "title": r[1], "priority": r[2], "effort": r[3]}
-        for r in rows
-    ]
     priority_rank = {"H": 0, "M": 1, "L": 2}
-    pbis.sort(key=lambda p: (priority_rank.get(p["priority"], 9), p["effort"]))
+    pbis.sort(key=lambda p: (priority_rank.get(p.priority, 9), p.effort))
     selected = []
     remaining = capacity
     for pbi in pbis:
-        if pbi["effort"] <= remaining:
-            selected.append(pbi)
-            remaining -= pbi["effort"]
+        if pbi.effort <= remaining:
+            selected.append({"id": pbi.id, "title": pbi.title, "priority": pbi.priority, "effort": pbi.effort})
+            remaining -= pbi.effort
     if not selected:
-        smallest = min(p["effort"] for p in pbis)
+        smallest = min(p.effort for p in pbis)
         return [], (
             f"No items fit within a capacity of {capacity}. "
             f"The smallest available item requires {smallest} effort points. "
@@ -48,21 +38,19 @@ def generate_burndown_chart(sprint_id, total_effort, daily_logs, duration_days, 
     if total_effort == 0:
         return None
     if start_date_str:
-        sprint_start = datetime.strptime(start_date_str, "%Y-%m-%d")
+        sprint_start = datetime.strptime(str(start_date_str), "%Y-%m-%d")
     elif daily_logs:
-        sprint_start = datetime.strptime(daily_logs[0][0], "%Y-%m-%d")
+        sprint_start = datetime.strptime(str(daily_logs[0][0]), "%Y-%m-%d")
     else:
         sprint_start = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
     ideal_dates = [sprint_start + timedelta(days=d) for d in range(duration_days + 1)]
-    ideal_remaining = [
-        total_effort * (1 - d / duration_days) for d in range(duration_days + 1)
-    ]
+    ideal_remaining = [total_effort * (1 - d / duration_days) for d in range(duration_days + 1)]
     actual_dates = [sprint_start]
     actual_remaining = [total_effort]
     cumulative = 0.0
-    for date_str, day_effort in daily_logs:
+    for date_val, day_effort in daily_logs:
         cumulative += day_effort
-        actual_dates.append(datetime.strptime(date_str, "%Y-%m-%d"))
+        actual_dates.append(datetime.strptime(str(date_val), "%Y-%m-%d"))
         actual_remaining.append(max(0.0, total_effort - cumulative))
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(ideal_dates, ideal_remaining, "b--", linewidth=2, label="Ideal")
@@ -90,19 +78,13 @@ def sprint_propose():
         if capacity <= 0:
             raise ValueError
     except (ValueError, KeyError):
-        return render_template(
-            "sprint.html",
-            sprints=get_all_sprints(),
-            proposal_error="Please enter a valid positive number for capacity."
-        )
+        sprints = Sprint.query.order_by(Sprint.id).all()
+        return render_template("sprint.html", sprints=sprints,
+                               proposal_error="Please enter a valid positive number for capacity.")
     proposed, error = propose_sprint(capacity)
-    return render_template(
-        "sprint.html",
-        sprints=get_all_sprints(),
-        proposed=proposed,
-        proposal_capacity=capacity,
-        proposal_error=error,
-    )
+    sprints = Sprint.query.order_by(Sprint.id).all()
+    return render_template("sprint.html", sprints=sprints, proposed=proposed,
+                           proposal_capacity=capacity, proposal_error=error)
 
 
 @hamed_bp.route("/sprint/create", methods=["POST"])
@@ -112,32 +94,37 @@ def sprint_create():
         capacity = float(request.form["capacity"])
     except (ValueError, KeyError):
         return redirect(url_for("homa.sprint"))
-    pbi_ids       = [int(x) for x in request.form.getlist("pbi_ids")]
-    start_date    = request.form.get("start_date") or None
-    duration_days = int(request.form.get("duration_days") or 14)
+    pbi_ids = [int(x) for x in request.form.getlist("pbi_ids")]
     if pbi_ids:
-        sprint_id = create_sprint(capacity, start_date, duration_days)
-        assign_pbis_to_sprint(sprint_id, pbi_ids)
+        sprint = Sprint(capacity=capacity, status="Planned")
+        db.session.add(sprint)
+        db.session.flush()
+        PBI.query.filter(PBI.id.in_(pbi_ids)).update(
+            {"sprint_id": sprint.id}, synchronize_session="fetch"
+        )
+        db.session.commit()
     return redirect(url_for("homa.sprint"))
 
 
 @hamed_bp.route("/tasks")
 @login_required
 def tasks():
-    all_tasks = get_all_tasks()
-    all_pbis  = get_all_pbis()
-    return render_template("tasks.html", tasks=all_tasks, pbis=all_pbis)
+    all_tasks = Task.query.order_by(Task.id).all()
+    all_pbis = PBI.query.all()
+    return render_template("tasks.html", tasks=all_tasks, pbis=all_pbis, role=current_user.role)
 
 
 @hamed_bp.route("/tasks/add", methods=["POST"])
 @login_required
 def tasks_add():
-    title  = request.form["title"].strip()
+    title = request.form["title"].strip()
     effort = request.form["effort"]
     pbi_id = request.form["pbi_id"]
     if title:
         try:
-            add_task(title, float(effort), int(pbi_id))
+            task = Task(title=title, estimated_effort=float(effort), pbi_id=int(pbi_id))
+            db.session.add(task)
+            db.session.commit()
         except (ValueError, KeyError):
             pass
     return redirect(url_for("hamed.tasks"))
@@ -147,11 +134,17 @@ def tasks_add():
 @login_required
 def log_effort_route():
     try:
-        task_id       = int(request.form["task_id"])
-        date          = request.form["date"]
+        task_id = int(request.form["task_id"])
+        date_str = request.form["date"]
         actual_effort = float(request.form["actual_effort"])
-        if actual_effort > 0 and date:
-            log_effort(task_id, date, actual_effort)
+        if actual_effort > 0 and date_str:
+            log = EffortLog(
+                task_id=task_id,
+                date=datetime.strptime(date_str, "%Y-%m-%d").date(),
+                hours_spent=actual_effort
+            )
+            db.session.add(log)
+            db.session.commit()
     except (ValueError, KeyError):
         pass
     return redirect(url_for("hamed.tasks"))
@@ -160,31 +153,40 @@ def log_effort_route():
 @hamed_bp.route("/reports")
 @login_required
 def reports():
-    sprints  = get_all_sprints()
-    velocity = get_velocity_data()
+    sprints = Sprint.query.order_by(Sprint.id).all()
+    velocity = db.session.query(
+        PBI.sprint_id,
+        db.func.coalesce(db.func.sum(EffortLog.hours_spent), 0)
+    ).outerjoin(Task, Task.pbi_id == PBI.id)\
+     .outerjoin(EffortLog, EffortLog.task_id == Task.id)\
+     .filter(PBI.sprint_id.isnot(None))\
+     .group_by(PBI.sprint_id).order_by(PBI.sprint_id).all()
     return render_template("reports.html", sprints=sprints, velocity=velocity)
 
 
 @hamed_bp.route("/reports/<int:sprint_id>")
 @login_required
 def reports_sprint(sprint_id):
-    sprint_row = get_sprint(sprint_id)
-    if sprint_row is None:
-        return redirect(url_for("hamed.reports"))
-    _, capacity, status, start_date, duration_days = sprint_row
-    duration_days = duration_days or 14
-    total_effort = get_sprint_total_effort(sprint_id)
-    daily_logs   = get_daily_effort_for_sprint(sprint_id)
-    velocity     = get_velocity_data()
-    sprints      = get_all_sprints()
-    chart_path = generate_burndown_chart(
-        sprint_id, total_effort, daily_logs, duration_days, start_date
-    )
-    return render_template(
-        "reports.html",
-        sprints=sprints,
-        velocity=velocity,
-        selected_sprint_id=sprint_id,
-        total_effort=total_effort,
-        chart_path=chart_path,
-    )
+    Sprint.query.get_or_404(sprint_id)
+    total_effort = db.session.query(
+        db.func.coalesce(db.func.sum(Task.estimated_effort), 0)
+    ).join(PBI, Task.pbi_id == PBI.id).filter(PBI.sprint_id == sprint_id).scalar()
+    daily_logs = db.session.query(
+        EffortLog.date,
+        db.func.sum(EffortLog.hours_spent)
+    ).join(Task, EffortLog.task_id == Task.id)\
+     .join(PBI, Task.pbi_id == PBI.id)\
+     .filter(PBI.sprint_id == sprint_id)\
+     .group_by(EffortLog.date).order_by(EffortLog.date).all()
+    velocity = db.session.query(
+        PBI.sprint_id,
+        db.func.coalesce(db.func.sum(EffortLog.hours_spent), 0)
+    ).outerjoin(Task, Task.pbi_id == PBI.id)\
+     .outerjoin(EffortLog, EffortLog.task_id == Task.id)\
+     .filter(PBI.sprint_id.isnot(None))\
+     .group_by(PBI.sprint_id).order_by(PBI.sprint_id).all()
+    sprints = Sprint.query.order_by(Sprint.id).all()
+    chart_path = generate_burndown_chart(sprint_id, total_effort, daily_logs, 14, None)
+    return render_template("reports.html", sprints=sprints, velocity=velocity,
+                           selected_sprint_id=sprint_id, total_effort=total_effort,
+                           chart_path=chart_path)
