@@ -51,5 +51,9 @@ def index():
         approval_message=approval_message
     )
 
+with app.app_context():
+    from flask_migrate import upgrade
+    upgrade()
+    
 if __name__ == "__main__":
     app.run(debug=True)
