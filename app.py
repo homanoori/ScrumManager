@@ -52,8 +52,14 @@ def index():
     )
 
 with app.app_context():
-    from flask_migrate import upgrade
-    upgrade()
+    from flask_migrate import upgrade, stamp
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    tables = inspector.get_table_names()
+    if 'sprints' in tables and 'users' in tables:
+        stamp('head')
+    else:
+        upgrade()
     
 if __name__ == "__main__":
     app.run(debug=True)
