@@ -1,3 +1,4 @@
+![CI](https://github.com/homanoori/ScrumManager/actions/workflows/test.yml/badge.svg)
 # ScrumManager
 
 A Scrum backlog management system built with Flask and PostgreSQL.
