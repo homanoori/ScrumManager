@@ -66,6 +66,12 @@ def run_migrations():
         return "Migrations applied!"
     except Exception as e:
         return f"Error: {str(e)}"
+    
+@app.route("/seed-demo-data")
+def seed_demo():
+    from seed import seed
+    seed()
+    return "Seeded!"
 
 if __name__ == "__main__":
     app.run(debug=True)
