@@ -70,7 +70,6 @@ class PBI(db.Model):
             "sprint_id": self.sprint_id,
         }
 
-
 class Sprint(db.Model):
     __tablename__ = "sprints"
 
@@ -122,3 +121,15 @@ class EffortLog(db.Model):
     date = db.Column(db.Date, nullable=False)
     hours_spent = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+class AuditLog(db.Model):
+    __tablename__ = "auditlog"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    action = db.Column(db.String(50), nullable=False)
+    entity_type = db.Column(db.String(20), nullable=False)
+    entity_id = db.Column(db.Integer, nullable=True)
+    old_value = db.Column(db.Text, nullable=True)
+    new_value = db.Column(db.Text, nullable=True)

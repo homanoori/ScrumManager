@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from flask import Blueprint, render_template, redirect, request, url_for
 from flask_login import login_required, current_user
-from models import db, PBI, Sprint, Task, EffortLog
+from models import db, PBI, Sprint, Task, EffortLog, AuditLog
 
 hamed_bp = Blueprint("hamed", __name__)
 
@@ -103,6 +103,16 @@ def sprint_create():
             {"sprint_id": sprint.id}, synchronize_session="fetch"
         )
         db.session.commit()
+        log = AuditLog(
+            action="created",
+            entity_type="Sprint",
+            entity_id=sprint.id,
+            old_value=None,
+            new_value=f"capacity={sprint.capacity}, status={sprint.status}",
+            user_id=current_user.id
+        )
+    db.session.add(log)
+    db.session.commit()
     return redirect(url_for("homa.sprint"))
 
 
@@ -125,6 +135,16 @@ def tasks_add():
             task = Task(title=title, estimated_effort=float(effort), pbi_id=int(pbi_id))
             db.session.add(task)
             db.session.commit()
+            log = AuditLog(
+                action="created",
+                entity_type="Task",
+                entity_id=task.id,
+                old_value=None,
+                new_value=f"title={task.title}, effort={task.estimated_effort}, pbi_id={task.pbi_id}",
+                user_id=current_user.id
+            )
+            db.session.add(log)
+            db.session.commit()
         except (ValueError, KeyError):
             pass
     return redirect(url_for("hamed.tasks"))
@@ -138,10 +158,20 @@ def log_effort_route():
         date_str = request.form["date"]
         actual_effort = float(request.form["actual_effort"])
         if actual_effort > 0 and date_str:
-            log = EffortLog(
+            effort_log = EffortLog(
                 task_id=task_id,
                 date=datetime.strptime(date_str, "%Y-%m-%d").date(),
                 hours_spent=actual_effort
+            )
+            db.session.add(effort_log)
+            db.session.commit()
+            log = AuditLog(
+                action="logged",
+                entity_type="EffortLog",
+                entity_id=effort_log.id,
+                old_value=None,
+                new_value=f"task_id={task_id}, date={date_str}, hours={actual_effort}",
+                user_id=current_user.id
             )
             db.session.add(log)
             db.session.commit()

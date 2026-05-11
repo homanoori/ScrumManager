@@ -1,6 +1,6 @@
 from flask import Blueprint, redirect, request, render_template
-from flask_login import login_required
-from models import db, Sprint, PBI, Task, EffortLog
+from flask_login import login_required, current_user
+from models import db, Sprint, PBI, Task, EffortLog, AuditLog
 
 homa_bp = Blueprint("homa", __name__)
 
@@ -15,11 +15,22 @@ def sprint():
 @login_required
 def update_sprint_status(sprint_id):
     sprint = Sprint.query.get_or_404(sprint_id)
+    old_status = sprint.status
     if sprint.status == "Planned":
         sprint.status = "Active"
     elif sprint.status == "Active":
         sprint.status = "Complete"
         _return_unfinished_pbis(sprint_id)
+    db.session.commit()
+    log = AuditLog(
+        action = "changed",
+        entity_type = "Sprint",
+        entity_id = sprint_id,
+        old_value = old_status,
+        new_value = sprint.status,
+        user_id = current_user.id
+    )
+    db.session.add(log)
     db.session.commit()
     return redirect("/sprint")
 

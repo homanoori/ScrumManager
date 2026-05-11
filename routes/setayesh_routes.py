@@ -1,6 +1,6 @@
 from flask import Blueprint, redirect, url_for, request, session
 from flask_login import login_required, current_user
-from models import db, Task, PBI
+from models import db, Task, PBI, AuditLog
 
 setayesh_bp = Blueprint("setayesh", __name__)
 
@@ -19,6 +19,7 @@ def update_task_status():
     task_id = int(request.form['task_id'])
     new_status = request.form['status']
     task = Task.query.get_or_404(task_id)
+    old_status = task.status
     task.status = new_status
     db.session.flush()
     incomplete = Task.query.filter_by(pbi_id=task.pbi_id).filter(Task.status != 'Done').count()
@@ -26,5 +27,15 @@ def update_task_status():
         pbi = PBI.query.get(task.pbi_id)
         if pbi:
             pbi.status = 'Complete'
+    db.session.commit()
+    log = AuditLog(
+        action="updated",
+        entity_type="Task",
+        entity_id=task_id,
+        old_value=old_status,
+        new_value=new_status,
+        user_id=current_user.id
+    )
+    db.session.add(log)
     db.session.commit()
     return redirect(url_for('hamed.tasks'))

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
-from models import db, PBI
+from models import db, PBI, AuditLog
 
 atena_bp = Blueprint("atena", __name__)
 
@@ -27,5 +27,15 @@ def add_pbi():
     effort = float(request.form["effort"])
     pbi = PBI(title=title, priority=priority, effort=effort, status="Incomplete")
     db.session.add(pbi)
+    db.session.commit()
+    log = AuditLog(
+        action="created",
+        entity_type="PBI",
+        entity_id=pbi.id,
+        old_value=None,
+        new_value=f"title={pbi.title}, priority={pbi.priority}, effort={pbi.effort}",
+        user_id=current_user.id
+    )
+    db.session.add(log)
     db.session.commit()
     return redirect(url_for("atena.backlog"))
