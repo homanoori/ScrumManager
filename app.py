@@ -54,11 +54,11 @@ def index():
 with app.app_context():
     db.create_all()
     
-@app.route("/seed-demo-data")
-def seed_demo():
-    from seed import seed
-    seed()
-    return "Seeded!"
+@app.route("/run-migrations")
+def run_migrations():
+    from flask_migrate import upgrade
+    upgrade()
+    return "Migrations applied!"
 
 if __name__ == "__main__":
     app.run(debug=True)
