@@ -130,8 +130,8 @@ Available roles:
 - CI/CD pipeline
 - React frontend migration
 
----
+----
 
-## License
+## Licenses
 
 Academic project for Software Engineering.
