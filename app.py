@@ -54,24 +54,6 @@ def index():
 with app.app_context():
     db.create_all()
     
-@app.route("/run-migrations")
-def run_migrations():
-    try:
-        with db.engine.connect() as conn:
-            conn.execute(db.text("ALTER TABLE pbis ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id)"))
-            conn.execute(db.text("ALTER TABLE sprints ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id)"))
-            conn.execute(db.text("CREATE TABLE IF NOT EXISTS projects (id SERIAL PRIMARY KEY, name VARCHAR(200) NOT NULL, description TEXT, created_at TIMESTAMP)"))
-            conn.execute(db.text("CREATE TABLE IF NOT EXISTS auditlog (id SERIAL PRIMARY KEY, timestamp TIMESTAMP, user_id INTEGER REFERENCES users(id), action VARCHAR(50) NOT NULL, entity_type VARCHAR(20) NOT NULL, entity_id INTEGER, old_value TEXT, new_value TEXT)"))
-            conn.commit()
-        return "Migrations applied!"
-    except Exception as e:
-        return f"Error: {str(e)}"
-    
-@app.route("/seed-demo-data")
-def seed_demo():
-    from seed import seed
-    seed()
-    return "Seeded!"
 
 if __name__ == "__main__":
     app.run(debug=True)
