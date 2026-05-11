@@ -51,3 +51,79 @@ pip install -r requirements.txt
 ```
 
 **3. Create a `.env` file**
+
+DATABASE_URL=postgresql://localhost/scrummanager_dev
+SECRET_KEY=your-secret-key
+FLASK_ENV=development
+
+**4. Run database migrations**
+```bash
+python3 -m flask db upgrade
+```
+
+**5. (Optional) Seed demo data**
+```bash
+python3 seed.py
+```
+
+**6. Start the app**
+```bash
+python3 app.py
+```
+
+Open `http://127.0.0.1:5000`
+
+---
+
+## Running with Docker
+
+```bash
+docker-compose up --build
+```
+
+Then run migrations inside the container:
+```bash
+docker-compose run web python3 -m flask db upgrade
+```
+
+---
+
+## Running Tests
+
+```bash
+python3 -m pytest tests/ -v --cov=. --cov-report=term-missing
+```
+
+Current coverage: **66%**
+
+---
+
+## Project Structure
+ScrumManager/
+├── app.py              # App factory and configuration
+├── models.py           # SQLAlchemy models
+├── routes/             # Flask blueprints
+│   ├── auth_routes.py
+│   ├── atena_routes.py  # Backlog
+│   ├── homa_routes.py   # Sprints
+│   ├── hamed_routes.py  # Tasks and Reports
+│   └── setayesh_routes.py
+├── templates/          # Jinja2 HTML templates
+├── static/             # CSS and charts
+├── tests/              # pytest test suite
+├── migrations/         # Alembic migrations
+├── seed.py             # Demo data seeder
+├── Dockerfile
+└── docker-compose.yml
+
+---
+
+## Team
+
+| Name | GitHub |
+|---|---|
+| Atena Hosseinifar | [@atenahfr](https://github.com/atenahfr) |
+| Homa Ahmadinoori | [@homanoori](https://github.com/homanoori) |
+| Hamed Tavanpour | [@hamedtavanapour-prog](https://github.com/hamedtavanapour-prog) |
+| Setayesh Mahmoudi | [@setayesh-mahmoudi](https://github.com/setayesh-mahmoudi) |
+| Sasan Shahin | — |
