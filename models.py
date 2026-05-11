@@ -133,3 +133,4 @@ class AuditLog(db.Model):
     entity_id = db.Column(db.Integer, nullable=True)
     old_value = db.Column(db.Text, nullable=True)
     new_value = db.Column(db.Text, nullable=True)
+    user = db.relationship("User", backref="audit_logs", lazy=True)

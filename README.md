@@ -1,137 +1,53 @@
-![CI](https://github.com/homanoori/ScrumManager/actions/workflows/test.yml/badge.svg)
+![CI](https://github.com/ScrumManagerTeam/ScrumManager/actions/workflows/test.yml/badge.svg)
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Flask](https://img.shields.io/badge/Flask-3.x-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
+![Docker](https://img.shields.io/badge/Docker-ready-blue)
+
 # ScrumManager
 
-A Scrum backlog management system built with Flask and PostgreSQL.
+A full-stack Scrum management web application built with Python, Flask, and PostgreSQL. Supports full sprint lifecycle management with role-based access control, audit logging, automated testing, and CI/CD.
 
-This project helps Scrum teams manage:
-- Product Backlogs
-- Sprint Backlogs
-- Tasks
-- Sprint approvals
-- Reports and burndown charts
-
-The application now includes real user authentication with role-based access control using Flask-Login.
+🔗 **Live Demo:** [https://scrummanager.onrender.com](https://scrummanager.onrender.com)  
+> Demo credentials: username `alice` or `bob` (developer), `carol` (client) — password: `password123`
 
 ---
 
 ## Features
 
-- User registration and login
-- Password hashing and authentication
-- Role-based permissions
-- Protected routes using Flask-Login
-- Product backlog management
-- Sprint backlog tracking
-- Task management
-- Burndown reporting
+- **Role-based access control** — developers, clients, and scrum masters see different views
+- **Product Backlog** — create and prioritize PBIs by effort and priority (H/M/L)
+- **Sprint Planning** — auto-propose sprints based on capacity, lock items once active
+- **Task Management** — decompose PBIs into tasks, track status (Not Started / In Progress / Done)
+- **Burndown Charts** — visualize sprint progress with matplotlib
+- **Audit Logging** — every PBI, sprint, and task change is recorded with user and timestamp
+- **Project Model** — data organized by project for multi-team support
 
 ---
 
 ## Tech Stack
 
-### Backend
-- Python
-- Flask
-- Flask-Login
-- Flask-Migrate
-- SQLAlchemy
-- PostgreSQL
-
-### Frontend
-- HTML
-- CSS
-- Jinja Templates
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.12, Flask, Flask-Login, Flask-Bcrypt |
+| Database | PostgreSQL, SQLAlchemy, Flask-Migrate |
+| Frontend | HTML, CSS, Jinja2 Templates |
+| Testing | pytest, pytest-cov (66% coverage) |
+| DevOps | Docker, GitHub Actions CI/CD, Render.com |
 
 ---
 
-## Setup
+## Local Setup
 
-### 1. Clone the repository
-
+**1. Clone the repository**
 ```bash
 git clone https://github.com/ScrumManagerTeam/ScrumManager.git
 cd ScrumManager
 ```
 
-### 2. Install dependencies
-
+**2. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment variables
-
-Create a `.env` file:
-
-```env
-DATABASE_URL=your_database_url
-SECRET_KEY=your_secret_key
-```
-
-### 4. Run database migrations
-
-```bash
-flask db upgrade
-```
-
-### 5. Start the application
-
-```bash
-python app.py
-```
-
-Open:
-
-```text
-http://127.0.0.1:5000
-```
-
----
-
-## Authentication
-
-The system uses:
-- Flask-Login for session management
-- Password hashing via Werkzeug security
-- Role-based authorization
-- Protected routes with `@login_required`
-
-Available roles:
-- developer
-- client
-- scrum_master
-
----
-
-## Team
-
-- Atena Hosseinifar
-- Hamed Tavanpour
-- Homa Ahmadinoori
-- Setayesh Mahmoudi
-- Sasan Shahin
-
----
-
-## Current Progress
-
-### Completed
-- Real authentication system
-- Protected routes
-- Role-based access control
-- Product backlog functionality
-- Sprint management
-- Reports module
-
-### In Progress
-- SQLAlchemy migration cleanup
-- Docker setup
-- Automated testing
-- CI/CD pipeline
-- React frontend migration
-
-----
-
-## Licenses
-
-Academic project for Software Engineering.
+**3. Create a `.env` file**
