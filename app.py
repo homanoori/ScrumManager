@@ -56,9 +56,20 @@ with app.app_context():
     
 @app.route("/run-migrations")
 def run_migrations():
-    from flask_migrate import upgrade
-    upgrade()
-    return "Migrations applied!"
+    from flask_migrate import upgrade, stamp
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    tables = inspector.get_table_names()
+    if 'sprints' in tables and 'users' in tables and 'project_id' not in [c['name'] for c in inspector.get_columns('pbis')]:
+        stamp('09d1b7916e9e')
+        upgrade()
+        return "Migrations applied!"
+    elif 'sprints' in tables and 'users' in tables:
+        upgrade()
+        return "Migrations applied!"
+    else:
+        upgrade()
+        return "Migrations applied!"
 
 if __name__ == "__main__":
     app.run(debug=True)
