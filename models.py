@@ -28,6 +28,24 @@ class User(UserMixin, db.Model):
             "role": self.role,
         }
         
+class Project(db.Model):
+    __tablename__ = "projects"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    pbis = db.relationship("PBI", backref="project", lazy=True)
+    sprints = db.relationship("Sprint", backref="project", lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+        }
+        
 class PBI(db.Model):
     __tablename__ = "pbis"
 
@@ -38,6 +56,7 @@ class PBI(db.Model):
     status = db.Column(db.String(20), default="Incomplete")
     sprint_id = db.Column(db.Integer, db.ForeignKey("sprints.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=True)
 
     tasks = db.relationship("Task", backref="pbi", lazy=True)
 
@@ -59,6 +78,7 @@ class Sprint(db.Model):
     capacity = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default="Planned")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"), nullable=True)
 
     pbis = db.relationship("PBI", backref="sprint", lazy=True)
 
