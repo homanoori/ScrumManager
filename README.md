@@ -51,10 +51,11 @@ pip install -r requirements.txt
 ```
 
 **3. Create a `.env` file**
-
+```
 DATABASE_URL=postgresql://localhost/scrummanager_dev
 SECRET_KEY=your-secret-key
 FLASK_ENV=development
+```
 
 **4. Run database migrations**
 ```bash
