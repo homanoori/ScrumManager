@@ -23,6 +23,16 @@ A full-stack Scrum management web application built with Python, Flask, and Post
 - **Audit Logging** — every PBI, sprint, and task change is recorded with user and timestamp
 - **Project Model** — data organized by project for multi-team support
 
+## Screenshots
+
+**Login Page**
+![Login](static/screenshots/login.png)
+
+**Product Backlog**
+![Backlog](static/screenshots/backlog.png)
+
+**Sprint Backlog**
+![Sprint](static/screenshots/sprint.png)
 ---
 
 ## Tech Stack
