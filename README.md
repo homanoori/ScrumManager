@@ -110,25 +110,26 @@ Current coverage: **66%**
 ---
 
 ## Project Structure
+
+```
 ScrumManager/
-├── app.py              # App factory and configuration
-├── models.py           # SQLAlchemy models
-├── routes/             # Flask blueprints
-│   ├── auth_routes.py
-│   ├── atena_routes.py  # Backlog
-│   ├── homa_routes.py   # Sprints
-│   ├── hamed_routes.py  # Tasks and Reports
-│   └── setayesh_routes.py
-├── templates/          # Jinja2 HTML templates
-├── static/             # CSS and charts
-├── tests/              # pytest test suite
-├── migrations/         # Alembic migrations
-├── seed.py             # Demo data seeder
+├── app.py                  # App factory and configuration
+├── models.py               # SQLAlchemy models
+├── seed.py                 # Demo data seeder
 ├── Dockerfile
-└── docker-compose.yml
-
+├── docker-compose.yml
+├── routes/
+│   ├── auth_routes.py
+│   ├── atena_routes.py     # Backlog
+│   ├── homa_routes.py      # Sprints
+│   ├── hamed_routes.py     # Tasks and Reports
+│   └── setayesh_routes.py
+├── templates/              # Jinja2 HTML templates
+├── static/                 # CSS and charts
+├── tests/                  # pytest test suite
+└── migrations/             # Alembic migrations
+```
 ---
-
 ## Team
 
 | Name | GitHub |
