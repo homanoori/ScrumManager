@@ -1,5 +1,6 @@
 [run]
 omit =
     database.py
+    seed.py
     tests/*
     migrations/*
