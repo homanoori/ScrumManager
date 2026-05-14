@@ -11,6 +11,7 @@ from routes.hamed_routes import hamed_bp
 from routes.homa_routes import homa_bp
 from routes.setayesh_routes import setayesh_bp
 from routes.atena_routes import atena_bp
+from routes.api_routes import api_bp
 
 load_dotenv()
 
@@ -37,6 +38,7 @@ app.register_blueprint(homa_bp)
 app.register_blueprint(setayesh_bp)
 app.register_blueprint(atena_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(api_bp)
 
 # --- Atena: base route ---
 @app.route("/")
