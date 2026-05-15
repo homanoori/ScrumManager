@@ -156,6 +156,29 @@ class PBIItem(Resource):
         return pbi
 
 # --- Sprint Endpoints ---
+sprint_input_model = api.model("SprintInput", {
+    "capacity": fields.Float(required=True, description="Sprint capacity in hours"),
+})
+
+sprint_create_model = api.model("SprintCreate", {
+    "capacity": fields.Float(required=True),
+    "pbi_ids": fields.List(fields.Integer, required=True),
+})
+
+proposed_pbi_model = api.model("ProposedPBI", {
+    "id": fields.Integer,
+    "title": fields.String,
+    "priority": fields.String,
+    "effort": fields.Float,
+})
+
+proposal_model = api.model("Proposal", {
+    "proposed": fields.List(fields.Nested(proposed_pbi_model)),
+    "total_effort": fields.Float,
+    "capacity": fields.Float,
+    "error": fields.String,
+})
+
 @sprint_ns.route("/")
 class SprintList(Resource):
     @jwt_required()
@@ -174,6 +197,60 @@ class SprintList(Resource):
             "pages": pagination.pages,
         }
 
+@sprint_ns.route("/propose")
+class SprintPropose(Resource):
+    @jwt_required()
+    @sprint_ns.expect(sprint_input_model)
+    @sprint_ns.marshal_with(proposal_model)
+    def post(self):
+        """Propose a sprint based on capacity"""
+        data = api.payload
+        capacity = data.get("capacity")
+        if not capacity or capacity <= 0:
+            api.abort(400, "capacity must be a positive number")
+        pbis = PBI.query.filter_by(sprint_id=None, status="Incomplete").all()
+        if not pbis:
+            return {"proposed": [], "total_effort": 0, "capacity": capacity, "error": "No items available"}
+        priority_rank = {"H": 0, "M": 1, "L": 2}
+        pbis.sort(key=lambda p: (priority_rank.get(p.priority, 9), p.effort))
+        selected = []
+        remaining = capacity
+        for pbi in pbis:
+            if pbi.effort <= remaining:
+                selected.append({"id": pbi.id, "title": pbi.title, "priority": pbi.priority, "effort": pbi.effort})
+                remaining -= pbi.effort
+        if not selected:
+            smallest = min(p.effort for p in pbis)
+            return {"proposed": [], "total_effort": 0, "capacity": capacity,
+                    "error": f"No items fit. Smallest item requires {smallest} hours."}
+        total = sum(p["effort"] for p in selected)
+        return {"proposed": selected, "total_effort": total, "capacity": capacity, "error": None}
+
+
+@sprint_ns.route("/create")
+class SprintCreate(Resource):
+    @jwt_required()
+    @sprint_ns.expect(sprint_create_model)
+    @sprint_ns.marshal_with(sprint_model, code=201)
+    def post(self):
+        """Create a sprint and assign PBIs to it"""
+        data = api.payload
+        capacity = data.get("capacity")
+        pbi_ids = data.get("pbi_ids", [])
+        if not capacity or capacity <= 0:
+            api.abort(400, "capacity must be a positive number")
+        if not pbi_ids:
+            api.abort(400, "pbi_ids cannot be empty")
+        sprint = Sprint(capacity=capacity, status="Planned")
+        db.session.add(sprint)
+        db.session.flush()
+        PBI.query.filter(PBI.id.in_(pbi_ids)).update(
+            {"sprint_id": sprint.id}, synchronize_session="fetch"
+        )
+        db.session.commit()
+        return sprint, 201
+
+
 @sprint_ns.route("/<int:sprint_id>")
 class SprintItem(Resource):
     @jwt_required()
@@ -185,6 +262,38 @@ class SprintItem(Resource):
             api.abort(404, f"Sprint {sprint_id} not found")
         return sprint
 
+
+@sprint_ns.route("/<int:sprint_id>/status")
+class SprintStatus(Resource):
+    @jwt_required()
+    @sprint_ns.marshal_with(sprint_model)
+    def post(self, sprint_id):
+        """Advance sprint status: Planned → Active → Complete"""
+        sprint = Sprint.query.get(sprint_id)
+        if not sprint:
+            api.abort(404, f"Sprint {sprint_id} not found")
+        if sprint.status == "Planned":
+            sprint.status = "Active"
+        elif sprint.status == "Active":
+            sprint.status = "Complete"
+            _return_unfinished_pbis(sprint_id)
+        else:
+            api.abort(400, "Sprint is already complete")
+        db.session.commit()
+        return sprint
+
+
+def _return_unfinished_pbis(sprint_id):
+    from models import EffortLog, Task
+    unfinished = PBI.query.filter_by(sprint_id=sprint_id).filter(PBI.status != "Complete").all()
+    for pbi in unfinished:
+        completed_effort = db.session.query(
+            db.func.coalesce(db.func.sum(EffortLog.hours_spent), 0)
+        ).join(Task, EffortLog.task_id == Task.id).filter(Task.pbi_id == pbi.id).scalar()
+        pbi.sprint_id = None
+        pbi.status = "Incomplete"
+        pbi.effort = max(0, pbi.effort - completed_effort)
+        
 # --- Task Endpoints ---
 @task_ns.route("/")
 class TaskList(Resource):
