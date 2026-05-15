@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import type { DropResult } from '@hello-pangea/dnd'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
 
@@ -89,6 +91,14 @@ export default function SprintPage() {
     }
   }
 
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return
+    const items = Array.from(proposed)
+    const [moved] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, moved)
+    setProposed(items)
+  }
+
   const priorityColor: Record<string, string> = {
     H: 'text-red-600 font-bold',
     M: 'text-yellow-600 font-bold',
@@ -99,6 +109,24 @@ export default function SprintPage() {
     Planned: 'bg-gray-100 text-gray-700',
     Active: 'bg-blue-100 text-blue-700',
     Complete: 'bg-green-100 text-green-700',
+  }
+
+  const CapacityBar = ({ sprint }: { sprint: Sprint }) => {
+    const pbis = sprintPbis.filter(p => p.sprint_id === sprint.id)
+    const used = pbis.reduce((sum, p) => sum + p.effort, 0)
+    const pct = Math.min((used / sprint.capacity) * 100, 100)
+    const color = pct > 90 ? 'bg-red-500' : pct > 70 ? 'bg-yellow-500' : 'bg-green-500'
+    return (
+      <div className="mt-2">
+        <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <span>Capacity used</span>
+          <span>{used}h / {sprint.capacity}h</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className={`${color} h-2 rounded-full transition-all`} style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -121,10 +149,9 @@ export default function SprintPage() {
 
         {loading ? <p className="text-gray-500">Loading...</p> : (
           <>
-            {/* Sprint cards */}
             {sprints.map(sprint => (
               <div key={sprint.id} className="bg-white rounded-xl shadow mb-4 p-6">
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start mb-2">
                   <div>
                     <h2 className="text-lg font-bold">Sprint #{sprint.id}</h2>
                     <p className="text-sm text-gray-500">Capacity: {sprint.capacity}h</p>
@@ -141,16 +168,19 @@ export default function SprintPage() {
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
+
+                <CapacityBar sprint={sprint} />
+
+                <div className="space-y-2 mt-4">
                   {sprintPbis.filter(p => p.sprint_id === sprint.id).map(pbi => (
                     <div key={pbi.id} className="flex justify-between items-center bg-gray-50 rounded px-4 py-2 text-sm">
                       <span className="font-medium">{pbi.title}</span>
-                      <div className="flex gap-4 text-gray-500">
+                      <div className="flex gap-4 items-center text-gray-500">
                         <span className={priorityColor[pbi.priority]}>{pbi.priority}</span>
                         <span>{pbi.effort}h</span>
                         <span>{pbi.status}</span>
                         {sprint.status === 'Active' && (
-                          <span className="text-gray-400">🔒 Locked</span>
+                          <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full">🔒 Locked</span>
                         )}
                       </div>
                     </div>
@@ -159,7 +189,6 @@ export default function SprintPage() {
               </div>
             ))}
 
-            {/* Propose new sprint */}
             {state.role !== 'client' && (
               <div className="bg-white rounded-xl shadow p-6 mt-6">
                 <h2 className="text-lg font-bold mb-4">Propose New Sprint</h2>
@@ -185,18 +214,39 @@ export default function SprintPage() {
 
                 {proposed.length > 0 && (
                   <div>
-                    <h3 className="font-medium mb-2 text-sm text-gray-700">Proposed Items:</h3>
-                    <div className="space-y-2 mb-4">
-                      {proposed.map(pbi => (
-                        <div key={pbi.id} className="flex justify-between items-center bg-blue-50 rounded px-4 py-2 text-sm">
-                          <span>{pbi.title}</span>
-                          <div className="flex gap-3 text-gray-500">
-                            <span className={priorityColor[pbi.priority]}>{pbi.priority}</span>
-                            <span>{pbi.effort}h</span>
+                    <p className="text-sm text-gray-500 mb-2">Drag to reorder items:</p>
+                    <DragDropContext onDragEnd={onDragEnd}>
+                      <Droppable droppableId="proposed">
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2 mb-4">
+                            {proposed.map((pbi, index) => (
+                              <Draggable key={pbi.id} draggableId={String(pbi.id)} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className={`flex justify-between items-center rounded px-4 py-2 text-sm cursor-grab ${
+                                      snapshot.isDragging ? 'bg-blue-100 shadow-lg' : 'bg-blue-50'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <span className="text-gray-400">⠿</span>
+                                      {pbi.title}
+                                    </span>
+                                    <div className="flex gap-3 text-gray-500">
+                                      <span className={priorityColor[pbi.priority]}>{pbi.priority}</span>
+                                      <span>{pbi.effort}h</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                     <p className="text-sm text-gray-600 mb-3">
                       Total: <strong>{proposed.reduce((s, p) => s + p.effort, 0)}h</strong> / {capacity}h
                     </p>
