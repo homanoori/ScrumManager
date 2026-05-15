@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 from flask_login import LoginManager, login_required, current_user
 from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager
 from models import db, User
 from routes.auth_routes import auth_bp
 import os
@@ -19,10 +20,12 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "fallback-secret")
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "jwt-fallback-secret")
 db.init_app(app)
 migrate = Migrate(app, db)
 
 bcrypt = Bcrypt(app)
+jwt = JWTManager(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -40,12 +43,10 @@ app.register_blueprint(atena_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
 
-# --- Atena: base route ---
 @app.route("/")
 @login_required
 def index():
     approval_message = session.pop("approval_message", None)
-
     return render_template(
         "base.html",
         username=current_user.username,
@@ -55,7 +56,6 @@ def index():
 
 with app.app_context():
     db.create_all()
-    
 
 if __name__ == "__main__":
     app.run(debug=True)

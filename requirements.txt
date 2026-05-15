@@ -10,3 +10,4 @@ matplotlib
 werkzeug
 gunicorn
 flask-restx
+flask-jwt-extended
