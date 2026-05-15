@@ -59,6 +59,7 @@ export default function Backlog() {
       <nav className="bg-gray-900 text-white px-6 py-3 flex justify-between items-center">
         <span className="font-bold text-lg">⚡ ScrumManager</span>
         <div className="flex items-center gap-4 text-sm">
+          <button onClick={() => navigate('/sprint')} className="hover:text-gray-300">Sprints</button>
           <span className="text-gray-400">{state.role}</span>
           <button
             onClick={() => { dispatch({ type: 'LOGOUT' }); navigate('/login') }}
