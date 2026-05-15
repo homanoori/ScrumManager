@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 from models import db, User
 from routes.auth_routes import auth_bp
+from flask_cors import CORS
 import os
 
 from routes.hamed_routes import hamed_bp
@@ -17,6 +18,7 @@ from routes.api_routes import api_bp
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "fallback-secret")
