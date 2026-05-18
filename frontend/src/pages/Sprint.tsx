@@ -136,6 +136,7 @@ export default function SprintPage() {
         <div className="flex items-center gap-4 text-sm">
           <button onClick={() => navigate('/backlog')} className="hover:text-gray-300">Backlog</button>
           <button onClick={() => navigate('/sprint')} className="hover:text-gray-300">Sprints</button>
+          <button onClick={() => navigate('/tasks')} className="hover:text-gray-300">Tasks</button>
           <span className="text-gray-400">{state.role}</span>
           <button onClick={() => { dispatch({ type: 'LOGOUT' }); navigate('/login') }}
             className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded transition">

@@ -323,3 +323,116 @@ class TaskItem(Resource):
         if not task:
             api.abort(404, f"Task {task_id} not found")
         return task
+    
+# --- Additional Task Endpoints ---
+
+task_input_model = api.model("TaskInput", {
+    "title": fields.String(required=True),
+    "estimated_effort": fields.Float(required=True),
+    "pbi_id": fields.Integer(required=True),
+})
+
+task_status_model = api.model("TaskStatus", {
+    "status": fields.String(required=True, description="Not Started, In Progress, or Done"),
+})
+
+effort_log_input_model = api.model("EffortLogInput", {
+    "hours_spent": fields.Float(required=True),
+    "date": fields.String(required=True, description="YYYY-MM-DD"),
+})
+
+effort_log_model = api.model("EffortLog", {
+    "id": fields.Integer,
+    "task_id": fields.Integer,
+    "date": fields.String,
+    "hours_spent": fields.Float,
+})
+
+@task_ns.route("/by-pbi")
+class TasksByPBI(Resource):
+    @jwt_required()
+    def get(self):
+        """Get all tasks grouped by PBI (only PBIs in active/planned sprints)"""
+        user_id = int(get_jwt_identity())
+        pbis = PBI.query.filter(PBI.sprint_id.isnot(None)).all()
+        result = []
+        for pbi in pbis:
+            tasks = Task.query.filter_by(pbi_id=pbi.id).all()
+            all_done = len(tasks) > 0 and all(t.status == "Done" for t in tasks)
+            result.append({
+                "pbi_id": pbi.id,
+                "pbi_title": pbi.title,
+                "pbi_priority": pbi.priority,
+                "pbi_status": pbi.status,
+                "sprint_id": pbi.sprint_id,
+                "all_done": all_done,
+                "tasks": [t.to_dict() for t in tasks],
+            })
+        return result
+
+@task_ns.route("/", methods=["POST"])
+class TaskCreate(Resource):
+    @jwt_required()
+    @task_ns.expect(task_input_model)
+    @task_ns.marshal_with(task_model, code=201)
+    def post(self):
+        """Create a new task under a PBI"""
+        data = api.payload
+        if not data.get("title", "").strip():
+            api.abort(400, "title is required")
+        if not data.get("estimated_effort") or data["estimated_effort"] <= 0:
+            api.abort(400, "estimated_effort must be positive")
+        pbi = PBI.query.get(data["pbi_id"])
+        if not pbi:
+            api.abort(404, "PBI not found")
+        task = Task(
+            title=data["title"].strip(),
+            estimated_effort=data["estimated_effort"],
+            pbi_id=data["pbi_id"],
+            status="Not Started",
+        )
+        db.session.add(task)
+        db.session.commit()
+        return task, 201
+
+@task_ns.route("/<int:task_id>/status")
+class TaskStatus(Resource):
+    @jwt_required()
+    @task_ns.expect(task_status_model)
+    @task_ns.marshal_with(task_model)
+    def post(self, task_id):
+        """Update task status"""
+        task = Task.query.get(task_id)
+        if not task:
+            api.abort(404, f"Task {task_id} not found")
+        status = api.payload.get("status")
+        if status not in ["Not Started", "In Progress", "Done"]:
+            api.abort(400, "status must be Not Started, In Progress, or Done")
+        task.status = status
+        db.session.commit()
+        return task
+
+@task_ns.route("/<int:task_id>/log-effort")
+class TaskEffortLog(Resource):
+    @jwt_required()
+    @task_ns.expect(effort_log_input_model)
+    @task_ns.marshal_with(effort_log_model, code=201)
+    def post(self, task_id):
+        """Log effort for a task"""
+        from models import EffortLog
+        from datetime import date as date_type
+        task = Task.query.get(task_id)
+        if not task:
+            api.abort(404, f"Task {task_id} not found")
+        data = api.payload
+        if not data.get("hours_spent") or data["hours_spent"] <= 0:
+            api.abort(400, "hours_spent must be positive")
+        try:
+            log_date = date_type.fromisoformat(data["date"])
+        except ValueError:
+            api.abort(400, "date must be YYYY-MM-DD format")
+        log = EffortLog(task_id=task_id, date=log_date, hours_spent=data["hours_spent"])
+        db.session.add(log)
+        task.actual_effort = (task.actual_effort or 0) + data["hours_spent"]
+        db.session.commit()
+        return {"id": log.id, "task_id": log.task_id, "date": str(log.date), "hours_spent": log.hours_spent}, 201
