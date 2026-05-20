@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Backlog from './pages/Backlog'
 import SprintPage from './pages/Sprint'
 import TasksPage from './pages/Tasks'
+import Dashboard from './pages/Dashboard'
 
 function App() {
   return (
@@ -11,10 +12,11 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/backlog" element={<Backlog />} />
           <Route path="/sprint" element={<SprintPage />} />
           <Route path="/tasks" element={<TasksPage />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -3,16 +3,18 @@ import { createContext, useContext, useReducer, ReactNode } from 'react'
 interface AuthState {
   token: string | null
   role: string | null
+  username: string | null
   isAuthenticated: boolean
 }
 
 type AuthAction =
-  | { type: 'LOGIN'; token: string; role: string }
+  | { type: 'LOGIN'; token: string; role: string; username: string }
   | { type: 'LOGOUT' }
 
 const initialState: AuthState = {
   token: localStorage.getItem('token'),
   role: localStorage.getItem('role'),
+  username: localStorage.getItem('username'),
   isAuthenticated: !!localStorage.getItem('token'),
 }
 
@@ -21,11 +23,13 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     case 'LOGIN':
       localStorage.setItem('token', action.token)
       localStorage.setItem('role', action.role)
-      return { token: action.token, role: action.role, isAuthenticated: true }
+      localStorage.setItem('username', action.username)
+      return { token: action.token, role: action.role, username: action.username, isAuthenticated: true }
     case 'LOGOUT':
       localStorage.removeItem('token')
       localStorage.removeItem('role')
-      return { token: null, role: null, isAuthenticated: false }
+      localStorage.removeItem('username')
+      return { token: null, role: null, username: null, isAuthenticated: false }
     default:
       return state
   }

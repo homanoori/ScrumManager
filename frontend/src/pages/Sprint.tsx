@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import type { DropResult } from '@hello-pangea/dnd'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/client'
+import Layout from '../components/Layout'
 
 interface PBI {
   id: number
@@ -130,21 +131,7 @@ export default function SprintPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-gray-900 text-white px-6 py-3 flex justify-between items-center">
-        <span className="font-bold text-lg">⚡ ScrumManager</span>
-        <div className="flex items-center gap-4 text-sm">
-          <button onClick={() => navigate('/backlog')} className="hover:text-gray-300">Backlog</button>
-          <button onClick={() => navigate('/sprint')} className="hover:text-gray-300">Sprints</button>
-          <button onClick={() => navigate('/tasks')} className="hover:text-gray-300">Tasks</button>
-          <span className="text-gray-400">{state.role}</span>
-          <button onClick={() => { dispatch({ type: 'LOGOUT' }); navigate('/login') }}
-            className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded transition">
-            Logout
-          </button>
-        </div>
-      </nav>
-
+    <Layout>
       <div className="max-w-5xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold mb-6">Sprint Backlog</h1>
 
@@ -262,6 +249,6 @@ export default function SprintPage() {
           </>
         )}
       </div>
-    </div>
+    </Layout>
   )
 }

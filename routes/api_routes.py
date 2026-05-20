@@ -436,3 +436,42 @@ class TaskEffortLog(Resource):
         task.actual_effort = (task.actual_effort or 0) + data["hours_spent"]
         db.session.commit()
         return {"id": log.id, "task_id": log.task_id, "date": str(log.date), "hours_spent": log.hours_spent}, 201
+    
+    # --- Dashboard Stats ---
+stats_model = api.model("Stats", {
+    "open_pbis": fields.Integer,
+    "tasks_done": fields.Integer,
+    "tasks_total": fields.Integer,
+    "effort_logged": fields.Float,
+    "active_sprint_id": fields.Integer,
+    "active_sprint_capacity": fields.Float,
+    "velocity": fields.Float,
+})
+
+@api.namespace("stats", description="Dashboard stats").route("/")
+class DashboardStats(Resource):
+    @jwt_required()
+    def get(self):
+        """Get dashboard summary stats"""
+        from models import EffortLog, Sprint as SprintModel
+        open_pbis = PBI.query.filter_by(status="Incomplete").count()
+        tasks_total = Task.query.count()
+        tasks_done = Task.query.filter_by(status="Done").count()
+        effort_logged = db.session.query(
+            db.func.coalesce(db.func.sum(EffortLog.hours_spent), 0)
+        ).scalar()
+        active_sprint = SprintModel.query.filter_by(status="Active").first()
+        last_complete = SprintModel.query.filter_by(status="Complete").order_by(SprintModel.id.desc()).first()
+        velocity = 0.0
+        if last_complete:
+            done_pbis = PBI.query.filter_by(sprint_id=last_complete.id, status="Complete").all()
+            velocity = sum(p.effort for p in done_pbis)
+        return {
+            "open_pbis": open_pbis,
+            "tasks_done": tasks_done,
+            "tasks_total": tasks_total,
+            "effort_logged": float(effort_logged),
+            "active_sprint_id": active_sprint.id if active_sprint else None,
+            "active_sprint_capacity": active_sprint.capacity if active_sprint else 0,
+            "velocity": velocity,
+        }
