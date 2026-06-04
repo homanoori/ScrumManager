@@ -3,10 +3,23 @@
 All notable changes to ScrumManager are documented here.
 
 ## [Unreleased] — Phase 2 in progress
-- React frontend migration
-- JWT authentication for API
-- Dark mode
-- Mobile responsive layout
+- Reports page with burndown chart and velocity table (in progress)
+- Comments system on PBIs
+- Email notifications on sprint events
+- AI-powered effort estimation and sprint planning
+- Full design overhaul (dark theme, sidebar, dashboard)
+
+## [v3.1.0] — 2026-05-19
+### Added
+- React frontend (Vite + TypeScript + Tailwind CSS)
+- JWT authentication for all API endpoints
+- Flask-RESTX with Swagger UI at /api/docs
+- Dashboard page with live stat cards
+- Backlog page with sortable table
+- Sprint page with drag-and-drop and capacity bar
+- Tasks page with inline status update and effort logging
+- Dark theme with sidebar navigation across all pages
+- Dashboard stats endpoint (/api/stats/)
 
 ## [v3.0.0] — 2026-05-11
 ### Added
